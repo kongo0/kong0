@@ -47,14 +47,15 @@ imageInput.addEventListener('change', (event) => {
 
     upload.classList.remove("upload_loaded");
     upload.classList.add("upload_loading");
-
-    upload.removeAttribute("selected")
+    upload.removeAttribute("selected");
 
     var file = imageInput.files[0];
+    if (!file) return;
+
     var data = new FormData();
     data.append("image", file);
 
-    fetch('	https://api.imgur.com/3/image' ,{
+    fetch('https://api.imgur.com/3/image', {
         method: 'POST',
         headers: {
             'Authorization': 'Client-ID c8c28d402435402'
@@ -63,17 +64,32 @@ imageInput.addEventListener('change', (event) => {
     })
     .then(result => result.json())
     .then(response => {
-        
+
+        // 🔥 KLUCZOWE ZABEZPIECZENIE
+        if (!response || !response.data || !response.data.link) {
+            throw new Error("Imgur upload failed");
+        }
+
         var url = response.data.link;
-        upload.classList.remove("error_shown")
+
+        upload.classList.remove("error_shown");
         upload.setAttribute("selected", url);
         upload.classList.add("upload_loaded");
         upload.classList.remove("upload_loading");
         upload.querySelector(".upload_uploaded").src = url;
 
     })
+    .catch(error => {
+        console.error("Upload error:", error);
 
-})
+        upload.classList.remove("upload_loading");
+        upload.classList.add("error_shown");
+
+        alert("Błąd dodawania zdjęcia. Spróbuj ponownie za chwilę.");
+    });
+
+});
+
 
 document.querySelector(".go").addEventListener('click', () => {
 
@@ -160,5 +176,6 @@ document.querySelectorAll(".input").forEach((input) => {
         localStorage.setItem(input.id, input.value);
     });
 });
+
 
 
